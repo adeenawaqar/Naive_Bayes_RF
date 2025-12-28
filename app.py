@@ -1,34 +1,35 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import os
 
-# Load the trained model
-model = joblib.load('titanic_rf_model.pkl')
-columns = joblib.load('model_columns.pkl')
+# Files check karne ke liye logic
+if not os.path.exists('titanic_rf_model.pkl'):
+    st.error("Error: Model file 'titanic_rf_model.pkl' nahi mili! Please GitHub par upload karein.")
+else:
+    # Model load karein
+    model = joblib.load('titanic_rf_model.pkl')
+    columns = joblib.load('model_columns.pkl')
 
-st.title("🚢 Titanic Survival Prediction")
-st.write("Enter passenger details to predict survival probability.")
+    st.title("🚢 Titanic Prediction")
 
-# Input fields
-pclass = st.selectbox("Passenger Class (1, 2, or 3)", [1, 2, 3])
-sex = st.selectbox("Sex", ["Male", "Female"])
-age = st.slider("Age", 0, 100, 25)
-sibsp = st.number_input("Siblings/Spouses Aboard", 0, 10, 0)
-parch = st.number_input("Parents/Children Aboard", 0, 10, 0)
-fare = st.number_input("Fare Paid", 0.0, 500.0, 32.0)
-embarked = st.selectbox("Embarked (1, 2, or 3)", [1, 2, 3])
+    # Inputs
+    pclass = st.selectbox("Pclass", [1, 2, 3])
+    sex = st.radio("Sex", ["Male", "Female"])
+    age = st.slider("Age", 0, 100, 25)
+    sibsp = st.number_input("SibSp", 0, 10, 0)
+    parch = st.number_input("Parch", 0, 10, 0)
+    fare = st.number_input("Fare", 0.0, 500.0, 32.0)
+    embarked = st.selectbox("Embarked", [1, 2, 3])
 
-# Convert Sex to numeric
-sex_val = 0 if sex == "Male" else 1
+    sex_val = 0 if sex == "Male" else 1
 
-if st.button("Predict"):
-    # Create input dataframe
-    input_df = pd.DataFrame([[pclass, sex_val, age, sibsp, parch, fare, embarked]], columns=columns)
-    
-    prediction = model.predict(input_df)
-    probability = model.predict_proba(input_df)[0][1]
+    if st.button("Predict"):
+        data = pd.DataFrame([[pclass, sex_val, age, sibsp, parch, fare, embarked]], columns=columns)
+        prediction = model.predict(data)[0]
+        
+        if prediction == 1:
+            st.success("Survived!")
+        else:
+            st.error("Not Survived!")
 
-    if prediction[0] == 1:
-        st.success(f"The passenger is predicted to SURVIVE (Probability: {probability:.2%})")
-    else:
-        st.error(f"The passenger is predicted NOT to survive (Probability: {probability:.2%})")
